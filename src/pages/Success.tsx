@@ -7,14 +7,15 @@ import { getVerificationResult } from "../lib/klaim/api";
 import { useOnboarding } from "../lib/onboardingStore";
 import {
   CLAIM_LABELS,
+  normalizeResult,
   QUICKDROP_CLAIMS,
-  type VerificationStatusResponse,
+  type NormalizedResult,
 } from "../types/verification";
 
 export function Success() {
   const navigate = useNavigate();
   const { requestId, profile, reset } = useOnboarding();
-  const [result, setResult] = useState<VerificationStatusResponse | null>(null);
+  const [result, setResult] = useState<NormalizedResult | null>(null);
 
   useEffect(() => {
     if (!requestId) {
@@ -26,7 +27,7 @@ export function Success() {
     let active = true;
     getVerificationResult(requestId)
       .then((res) => {
-        if (active) setResult(res);
+        if (active) setResult(normalizeResult(res));
       })
       .catch(() => {
         /* Non-fatal: we still show the verified confirmation. */

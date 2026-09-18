@@ -20,6 +20,7 @@ interface PollingState {
  */
 export function useVerificationPolling(
   requestId: string | null,
+  intervalMs: number = POLL_INTERVAL_MS,
 ): PollingState {
   const [data, setData] = useState<VerificationStatusResponse | null>(null);
   const [error, setError] = useState<KlaimApiError | null>(null);
@@ -47,7 +48,7 @@ export function useVerificationPolling(
       // Schedule the next poll only if still active.
       if (!isTerminalStatus(result.status)) {
         clearTimer();
-        timerRef.current = setTimeout(fetchStatus, POLL_INTERVAL_MS);
+        timerRef.current = setTimeout(fetchStatus, intervalMs);
       } else {
         clearTimer();
       }
@@ -61,11 +62,11 @@ export function useVerificationPolling(
           : new KlaimApiError("unknown", "Unexpected error."),
       );
       clearTimer();
-      timerRef.current = setTimeout(fetchStatus, POLL_INTERVAL_MS);
+      timerRef.current = setTimeout(fetchStatus, intervalMs);
     } finally {
       if (activeRef.current) setLoading(false);
     }
-  }, [requestId]);
+  }, [requestId, intervalMs]);
 
   const refresh = useCallback(() => {
     clearTimer();

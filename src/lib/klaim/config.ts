@@ -26,8 +26,11 @@ export const DEMO_DID = readEnv("VITE_DEMO_DID", "did:identipi:demo-user-001");
 /** Verifier identifier for this relying application. */
 export const VERIFIER_ID = readEnv("VITE_VERIFIER_ID", "quickdrop-demo");
 
-/** Polling interval (ms) while a verification request is active. */
+/** Polling interval (ms) for the consumer onboarding status screen. */
 export const POLL_INTERVAL_MS = 4000;
+
+/** Faster polling interval (ms) for the verifier dashboard. */
+export const VERIFIER_POLL_INTERVAL_MS = 1500;
 
 /** True when the API URL still points at a placeholder (not yet configured). */
 export const IS_API_CONFIGURED = !PLACEHOLDER_HOSTS.some((h) =>

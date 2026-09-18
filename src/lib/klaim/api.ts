@@ -11,7 +11,9 @@
 
 import { KLAIM_API_URL, USE_MOCK, VERIFIER_ID } from "./config";
 import type {
+  ClaimKey,
   CreateVerificationResponse,
+  VerificationResultResponse,
   VerificationStatusResponse,
 } from "../../types/verification";
 import { QUICKDROP_CLAIMS } from "../../types/verification";
@@ -98,14 +100,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
  */
 export async function createVerificationRequest(
   userDid: string,
+  claims: ClaimKey[] = QUICKDROP_CLAIMS,
 ): Promise<CreateVerificationResponse> {
+  // Guard against an empty selection; fall back to all claims.
+  const requestedClaims = claims.length > 0 ? claims : QUICKDROP_CLAIMS;
   if (USE_MOCK) return mockCreateVerificationRequest(userDid);
   return request<CreateVerificationResponse>("/api/verification-requests", {
     method: "POST",
     body: JSON.stringify({
       verifierId: VERIFIER_ID,
       userDid,
-      claims: QUICKDROP_CLAIMS,
+      claims: requestedClaims,
     }),
   });
 }
@@ -135,11 +140,21 @@ export async function getVerificationStatus(
  */
 export async function getVerificationResult(
   requestId: string,
-): Promise<VerificationStatusResponse> {
-  // In mock mode the status response already carries the final fields, so we
-  // reuse it to keep the demo working without a separate mock endpoint.
-  if (USE_MOCK) return mockGetVerificationStatus(requestId);
-  return request<VerificationStatusResponse>(
+): Promise<VerificationResultResponse> {
+  // In mock mode the status response already carries the final fields (claims
+  // as a boolean map + flat proofId/txId), which matches the result shape, so
+  // we reuse it to keep the demo working without a separate mock endpoint.
+  if (USE_MOCK) {
+    const mock = await mockGetVerificationStatus(requestId);
+    return {
+      requestId: mock.requestId,
+      status: mock.status,
+      claims: mock.claims as VerificationResultResponse["claims"],
+      proofId: mock.proofId,
+      txId: mock.txId,
+    };
+  }
+  return request<VerificationResultResponse>(
     `/api/verification-requests/${encodeURIComponent(requestId)}/result`,
   );
 }

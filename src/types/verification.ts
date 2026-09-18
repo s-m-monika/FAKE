@@ -36,11 +36,57 @@ export interface CreateVerificationResponse {
   status: VerificationStatus;
 }
 
+/** Consent sub-object on the status response. */
+export interface ConsentInfo {
+  decision: "ALLOW" | "DENY" | null;
+  at: string | null;
+}
+
+/** Payment sub-object. Richer fields appear on the VERIFIED result. */
+export interface PaymentInfo {
+  status?: string;
+  txId?: string | null;
+  network?: string;
+  amount?: string | number;
+  explorerUrl?: string;
+}
+
 /** Response from GET /api/verification-requests/:id. */
 export interface VerificationStatusResponse {
   requestId: string;
   status: VerificationStatus;
+  verifierId?: string;
+  userDid?: string;
+  claims?: ClaimKey[] | Partial<Record<ClaimKey, boolean>>;
+  consent?: ConsentInfo;
+  payment?: PaymentInfo;
+  createdAt?: string;
+  updatedAt?: string;
+  // Legacy/back-compat flat fields (older mock shape).
+  proofId?: string;
+  txId?: string;
+}
+
+/** Proof sub-object on the VERIFIED result. */
+export interface ProofInfo {
+  proofId: string;
+  engine?: string;
+  notDisclosed?: string[];
+}
+
+/**
+ * Response from GET /api/verification-requests/:id/result.
+ * Before VERIFIED: { requestId, status, result: null }.
+ * When VERIFIED: claims map + proof + payment are populated.
+ */
+export interface VerificationResultResponse {
+  requestId: string;
+  status: VerificationStatus;
+  result?: null;
   claims?: Partial<Record<ClaimKey, boolean>>;
+  proof?: ProofInfo;
+  payment?: PaymentInfo;
+  // Back-compat flat fields (older mock shape).
   proofId?: string;
   txId?: string;
 }
@@ -86,6 +132,37 @@ export const STATUS_LABELS: Record<VerificationStatus, string> = {
   CREDENTIAL_INVALID: "Credential could not be verified",
   VERIFICATION_FAILED: "Verification failed",
 };
+
+/** Normalized, flat view of a verification result for the UI to render. */
+export interface NormalizedResult {
+  claims: Partial<Record<ClaimKey, boolean>>;
+  proofId?: string;
+  engine?: string;
+  notDisclosed?: string[];
+  txId?: string;
+  network?: string;
+  amount?: string | number;
+  explorerUrl?: string;
+}
+
+/**
+ * Flattens the /result response (new nested shape or legacy flat shape) into a
+ * single structure the UI can read without branching everywhere.
+ */
+export function normalizeResult(
+  res: VerificationResultResponse,
+): NormalizedResult {
+  return {
+    claims: res.claims ?? {},
+    proofId: res.proof?.proofId ?? res.proofId,
+    engine: res.proof?.engine,
+    notDisclosed: res.proof?.notDisclosed,
+    txId: res.payment?.txId ?? res.txId ?? undefined,
+    network: res.payment?.network,
+    amount: res.payment?.amount,
+    explorerUrl: res.payment?.explorerUrl,
+  };
+}
 
 /** Human-readable label for each claim key, used across screens. */
 export const CLAIM_LABELS: Record<ClaimKey, string> = {
