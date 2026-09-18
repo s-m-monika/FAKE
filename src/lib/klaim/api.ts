@@ -114,6 +114,8 @@ export async function createVerificationRequest(
  * Fetch the current status of a verification request.
  *
  * GET /api/verification-requests/:id
+ * Returns the lifecycle `status`. Per the KLAIM contract, the final
+ * claims/proofId/txId are fetched separately via getVerificationResult().
  */
 export async function getVerificationStatus(
   requestId: string,
@@ -121,5 +123,23 @@ export async function getVerificationStatus(
   if (USE_MOCK) return mockGetVerificationStatus(requestId);
   return request<VerificationStatusResponse>(
     `/api/verification-requests/${encodeURIComponent(requestId)}`,
+  );
+}
+
+/**
+ * Fetch the final result of a completed verification request.
+ *
+ * GET /api/verification-requests/:id/result
+ * Returns { status, claims, proofId, txId }. Call this once the status
+ * endpoint reports a terminal state (e.g. VERIFIED).
+ */
+export async function getVerificationResult(
+  requestId: string,
+): Promise<VerificationStatusResponse> {
+  // In mock mode the status response already carries the final fields, so we
+  // reuse it to keep the demo working without a separate mock endpoint.
+  if (USE_MOCK) return mockGetVerificationStatus(requestId);
+  return request<VerificationStatusResponse>(
+    `/api/verification-requests/${encodeURIComponent(requestId)}/result`,
   );
 }

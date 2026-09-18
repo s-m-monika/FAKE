@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { ClaimRow } from "../components/verification/ClaimRow";
 import { CheckIcon, ShieldIcon } from "../components/ui/icons";
-import { getVerificationStatus } from "../lib/klaim/api";
+import { getVerificationResult } from "../lib/klaim/api";
 import { useOnboarding } from "../lib/onboardingStore";
 import {
   CLAIM_LABELS,
@@ -22,8 +22,9 @@ export function Success() {
       return;
     }
     // Fetch the final result once, to display claims / proof / tx metadata.
+    // Per the KLAIM contract this comes from the dedicated /result endpoint.
     let active = true;
-    getVerificationStatus(requestId)
+    getVerificationResult(requestId)
       .then((res) => {
         if (active) setResult(res);
       })
