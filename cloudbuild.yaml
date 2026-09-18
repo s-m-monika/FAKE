@@ -1,0 +1,38 @@
+# Cloud Build config: builds the QuickDrop image from the Dockerfile and
+# pushes it to Artifact Registry. VITE_* values are passed as build args
+# (embedded at build time by Vite) via substitutions — never hardcoded.
+#
+# Override values at submit time, e.g.:
+#   gcloud builds submit --config cloudbuild.yaml \
+#     --substitutions=_VITE_KLAIM_API_URL=https://real-klaim-url,_VITE_KLAIM_MOCK=false
+substitutions:
+  _IMAGE: asia-south1-docker.pkg.dev/klaim-509005/quickdrop/quickdrop:latest
+  _VITE_KLAIM_API_URL: "https://klaim-api.example.com"
+  _VITE_DEMO_DID: "did:identipi:demo-user-001"
+  _VITE_VERIFIER_ID: "quickdrop-demo"
+  _VITE_KLAIM_MOCK: "true"
+  _VITE_KLAIM_MOCK_OUTCOME: "verified"
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - "--build-arg"
+      - "VITE_KLAIM_API_URL=${_VITE_KLAIM_API_URL}"
+      - "--build-arg"
+      - "VITE_DEMO_DID=${_VITE_DEMO_DID}"
+      - "--build-arg"
+      - "VITE_VERIFIER_ID=${_VITE_VERIFIER_ID}"
+      - "--build-arg"
+      - "VITE_KLAIM_MOCK=${_VITE_KLAIM_MOCK}"
+      - "--build-arg"
+      - "VITE_KLAIM_MOCK_OUTCOME=${_VITE_KLAIM_MOCK_OUTCOME}"
+      - "-t"
+      - "${_IMAGE}"
+      - "."
+
+images:
+  - "${_IMAGE}"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
